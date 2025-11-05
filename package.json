@@ -1,0 +1,17 @@
+{
+  "name": "rackrunner",
+  "private": true,
+  "packageManager": "pnpm@8",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "migrate:sbx": "ts-node packages/db/run-migrations.ts sbx",
+    "migrate:prod": "ts-node packages/db/run-migrations.ts prod"
+  },
+  "devDependencies": {
+    "turbo": "^1.10.12",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.3"
+  }
+}

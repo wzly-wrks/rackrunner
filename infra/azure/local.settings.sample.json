@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "API_JWT_SECRET": "dev-change",
+    "PGHOST": "localhost",
+    "PGPORT": "5432",
+    "PGUSER": "",
+    "PGPASSWORD": "",
+    "PGDATABASE": "rackrunner"
+  }
+}
