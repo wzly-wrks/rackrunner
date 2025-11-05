@@ -1,0 +1,48 @@
+name: API Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - sbx
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "pnpm"
+      - run: pnpm install
+      - run: pnpm --filter @rackrunner/api build
+      - name: Archive Function App
+        run: |
+          mkdir -p release
+          cp -r apps/api/dist release/
+          cd release
+          zip -r function.zip .
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: function-app
+          path: release/function.zip
+      - name: Deploy Sandbox Slot
+        if: github.ref == 'refs/heads/sbx'
+        uses: Azure/functions-action@v1
+        with:
+          app-name: rackrunner-api-sbx
+          package: release/function.zip
+          slot-name: sbx
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE_SBX }}
+      - name: Deploy Production Slot
+        if: github.ref == 'refs/heads/main'
+        uses: Azure/functions-action@v1
+        with:
+          app-name: rackrunner-api
+          package: release/function.zip
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE_PROD }}

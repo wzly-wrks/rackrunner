@@ -1,0 +1,16 @@
+{
+  "name": "@rackrunner/db",
+  "version": "0.0.1",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "ts-node run-migrations.ts",
+    "lint": "echo 'no lint configured for db'"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "pg": "^8.11.3"
+  }
+}
