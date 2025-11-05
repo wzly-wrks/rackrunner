@@ -5,11 +5,18 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
-    "lint": "turbo run lint",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write &quot;**/*.{ts,tsx,js,jsx,json,md}&quot;",
+    "format:check": "prettier --check &quot;**/*.{ts,tsx,js,jsx,json,md}&quot;",
     "migrate:sbx": "ts-node packages/db/run-migrations.ts sbx",
     "migrate:prod": "ts-node packages/db/run-migrations.ts prod"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "@typescript-eslint/parser": "^6.13.2",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0",
     "turbo": "^1.10.12",
     "ts-node": "^10.9.1",
     "typescript": "^5.3.3"

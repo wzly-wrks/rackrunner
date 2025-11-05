@@ -6,7 +6,36 @@ import { registerPlannerRoutes } from "./routes/planner";
 
 dotenv.config();
 
-const fastify = Fastify({ logger: false });
+// Enable logging with proper configuration
+const fastify = Fastify({
+  logger: {
+    level: process.env.LOG_LEVEL || "info",
+    serializers: {
+      req(request) {
+        return {
+          method: request.method,
+          url: request.url,
+          headers: request.headers,
+          hostname: request.hostname,
+          remoteAddress: request.ip,
+        };
+      },
+    },
+  },
+});
+
+// Add CORS support
+fastify.addHook("onRequest", async (request, reply) => {
+  const origin = request.headers.origin || "*";
+  reply.header("Access-Control-Allow-Origin", origin);
+  reply.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  reply.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  reply.header("Access-Control-Allow-Credentials", "true");
+  
+  if (request.method === "OPTIONS") {
+    reply.code(200).send();
+  }
+});
 
 registerRackRoutes(fastify);
 registerPlannerRoutes(fastify);
