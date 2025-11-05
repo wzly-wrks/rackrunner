@@ -1,54 +1,42 @@
-name: API Deploy
+name: API - Deploy Azure Functions
 
 on:
   push:
     branches:
       - main
       - sbx
+  workflow_dispatch:
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Setup Node.js
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
-          cache-dependency-path: pnpm-lock.yaml
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+          cache: 'pnpm'
+
+      - name: Install dependencies (workspace)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspaces
+        run: pnpm -r build
+
+      # Deploy the Function App from the apps/api directory.
+      - name: Deploy to Azure Functions (PROD)
+        uses: Azure/functions-action@v1
         with:
-          version: 8.15.4
-      - name: Install dependencies
-        run: pnpm install
-      - name: Build API
-        run: pnpm --filter @rackrunner/api build
-      - name: Archive Function App
-        run: |
-          mkdir -p release
-          cp -r apps/api/dist release/
-          cd release
-          zip -r function.zip .
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: function-app
-          path: release/function.zip
-      - name: Deploy Sandbox Slot
-        if: github.ref == 'refs/heads/sbx'
-        uses: azure/functions-action@v1
-        with:
-          app-name: rackrunner-api-sbx
-          package: release/function.zip
-          slot-name: sbx
-          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE_SBX }}
-      - name: Deploy Production Slot
-        if: github.ref == 'refs/heads/main'
-        uses: azure/functions-action@v1
-        with:
-          app-name: rackrunner-api
-          package: release/function.zip
+          app-type: 'functionapp'
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE_PROD }}
+          package: 'apps/api'
