@@ -9,16 +9,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "pnpm"
-      - run: pnpm install
-      - run: pnpm --filter @rackrunner/web build:pages
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8.15.4
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build static site
+        run: pnpm --filter @rackrunner/web build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

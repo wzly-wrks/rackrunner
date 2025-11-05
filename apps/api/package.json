@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@azure/functions": "^4.4.0",
-    "argon2": "^0.30.5",
     "fastify": "^4.24.3",
     "jsonwebtoken": "^9.0.2",
     "nanoid": "^4.0.2",

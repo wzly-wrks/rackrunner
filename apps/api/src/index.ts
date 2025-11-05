@@ -1,5 +1,5 @@
-import { AzureFunction, Context, HttpRequest } from "@azure/functions";
-import Fastify from "fastify";
+import type { HttpRequest, InvocationContext, HttpResponseInit } from "@azure/functions";
+import Fastify, { type HTTPMethods } from "fastify";
 import dotenv from "dotenv";
 import { registerRackRoutes } from "./routes/racks";
 import { registerPlannerRoutes } from "./routes/planner";
@@ -40,24 +40,46 @@ fastify.addHook("onRequest", async (request, reply) => {
 registerRackRoutes(fastify);
 registerPlannerRoutes(fastify);
 
-const handler: AzureFunction = async (context: Context, req: HttpRequest) => {
-  const { method, headers, query, body, url } = req;
-  const requestUrl = url
-    ? new URL(url)
+function normalizeHeaders(response: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(response).map(([key, value]) => [
+      key,
+      Array.isArray(value) ? value.join(", ") : value === undefined ? "" : String(value)
+    ])
+  );
+}
+
+export default async function handler(req: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  const requestUrl = req.url
+    ? new URL(req.url)
     : new URL((req as any).originalUrl ? `http://localhost${(req as any).originalUrl}` : "http://localhost");
-  const result = await fastify.inject({
-    method: method || "GET",
-    headers: headers as Record<string, string>,
+
+  const headers = Object.fromEntries(req.headers.entries());
+  const query = Object.fromEntries(req.query.entries());
+  const payload = req.body ? await req.text() : undefined;
+
+  const method = (req.method?.toUpperCase() || "GET") as HTTPMethods;
+
+  const result = (await fastify.inject({
+    method: method as any,
+    headers,
     url: requestUrl.pathname + (requestUrl.search || ""),
-    payload: body,
-    query: query as Record<string, string>
-  });
+    payload,
+    query
+  })) as any;
 
-  context.res = {
+  context.log(`Handled ${method} ${requestUrl.pathname}`);
+
+  const responseBody =
+    typeof result.body === "string" || result.body instanceof Uint8Array
+      ? result.body
+      : result.body !== undefined
+        ? JSON.stringify(result.body)
+        : undefined;
+
+  return {
     status: result.statusCode,
-    headers: result.headers as Record<string, string>,
-    body: result.body
+    headers: normalizeHeaders(result.headers as Record<string, unknown>),
+    body: responseBody
   };
-};
-
-export default handler;
+}

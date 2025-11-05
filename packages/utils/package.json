@@ -3,5 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "main": "qr.ts",
-  "types": "qr.ts"
+  "types": "qr.ts",
+  "dependencies": {
+    "@noble/hashes": "^1.5.0"
+  }
 }
