@@ -16,22 +16,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 8
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
-
-      - name: Install dependencies (workspace)
-        run: pnpm install --frozen-lockfile
-
-      - name: Build workspaces
-        run: pnpm -r build
 
       # Deploy the Function App from the apps/api directory.
       - name: Deploy to Azure Functions (PROD)
