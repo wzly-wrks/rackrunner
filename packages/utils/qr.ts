@@ -1,4 +1,13 @@
 import { createHmac } from "crypto";
+
+// Validate that QR_HMAC_SECRET is set in production
+if (!process.env.QR_HMAC_SECRET) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("QR_HMAC_SECRET environment variable is required in production");
+  }
+  console.warn("WARNING: Using default QR_HMAC_SECRET. This is insecure and should only be used in development.");
+}
+
 const SECRET = process.env.QR_HMAC_SECRET || "dev-secret-change";
 
 function base32(buf: Buffer) {

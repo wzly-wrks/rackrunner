@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:pages": "next build && next export",
-    "lint": "echo 'lint disabled for web POC'"
+    "lint": "next lint"
   },
   "dependencies": {
     "@azure/msal-browser": "^3.7.0",

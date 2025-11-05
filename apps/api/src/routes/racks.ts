@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getPool } from "../db";
 import { signKv } from "@rackrunner/utils/qr";
 import { PDFDocument, StandardFonts } from "pdf-lib";
+import { DEFAULT_RACK_CAPACITY, ERROR_MESSAGES } from "../constants";
 
 const openSchema = z.object({
   rackId: z.string().min(1),
@@ -41,12 +42,12 @@ export function registerRackRoutes(app: FastifyInstance) {
         }
         await client.query(
           `UPDATE racks SET status='OPEN', opened_by=$2, opened_at=$3, capacity=$4, closed_by=NULL, closed_at=NULL WHERE id=$1`,
-          [body.rackId, body.userId, now, body.capacity || rack.capacity || 24]
+          [body.rackId, body.userId, now, body.capacity || rack.capacity || DEFAULT_RACK_CAPACITY]
         );
       } else {
         await client.query(
           `INSERT INTO racks (id, capacity, status, opened_by, opened_at) VALUES ($1,$2,'OPEN',$3,$4)` ,
-          [body.rackId, body.capacity || 24, body.userId, now]
+          [body.rackId, body.capacity || DEFAULT_RACK_CAPACITY, body.userId, now]
         );
       }
       await client.query("COMMIT");
@@ -72,7 +73,7 @@ export function registerRackRoutes(app: FastifyInstance) {
       await client.query("BEGIN");
       const rackRes = await client.query("SELECT status FROM racks WHERE id=$1 FOR UPDATE", [body.rackId]);
       if (rackRes.rows.length === 0 || rackRes.rows[0].status !== "OPEN") {
-        throw new Error("Rack not open");
+        throw new Error(ERROR_MESSAGES.RACK_NOT_OPEN);
       }
       for (let i = 0; i < quantity; i++) {
         await client.query(
@@ -99,11 +100,11 @@ export function registerRackRoutes(app: FastifyInstance) {
       await client.query("BEGIN");
       const rackRes = await client.query("SELECT * FROM racks WHERE id=$1 FOR UPDATE", [body.rackId]);
       if (rackRes.rows.length === 0) {
-        throw new Error("Rack not found");
+        throw new Error(ERROR_MESSAGES.RACK_NOT_FOUND);
       }
       const rack = rackRes.rows[0];
       if (rack.status !== "OPEN") {
-        throw new Error("Rack not open");
+        throw new Error(ERROR_MESSAGES.RACK_NOT_OPEN);
       }
       const itemsRes = await client.query(
         `SELECT meal_code, batch_date, COUNT(*)::int AS qty

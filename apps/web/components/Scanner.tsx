@@ -7,13 +7,34 @@ type Props = {
 
 export default function Scanner({ onScan }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+
   useEffect(() => {
     if (!ref.current) return;
-    const scanner = new Html5QrcodeScanner(ref.current.id, { fps: 5, qrbox: 250 });
-    scanner.render((decodedText) => onScan(decodedText), () => {});
+
+    // Initialize scanner only once
+    if (!scannerRef.current) {
+      scannerRef.current = new Html5QrcodeScanner(
+        ref.current.id,
+        { fps: 5, qrbox: 250 },
+        false
+      );
+      scannerRef.current.render(
+        (decodedText) => onScan(decodedText),
+        (error) => {
+          // Only log errors that are not "No QR code found"
+          if (!error.includes("NotFoundException")) {
+            console.error("QR Scanner error:", error);
+          }
+        }
+      );
+    }
 
     return () => {
-      scanner.clear().catch(() => undefined);
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(() => undefined);
+        scannerRef.current = null;
+      }
     };
   }, [onScan]);
 

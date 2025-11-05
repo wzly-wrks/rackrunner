@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { getPool } from "../db";
 import { PoolClient } from "pg";
+import { AUDIT_LOG_LIMIT, ERROR_MESSAGES } from "../constants";
 
 const importSchema = z.object({
   day: z.string().min(8),
@@ -88,7 +89,7 @@ export function registerPlannerRoutes(app: FastifyInstance) {
         [body.requirementId]
       );
       if (reqRes.rows.length === 0) {
-        throw new Error("Requirement not found");
+        throw new Error(ERROR_MESSAGES.REQUIREMENT_NOT_FOUND);
       }
       const requirement = reqRes.rows[0];
       const outstanding = requirement.qty_needed - (await allocatedQty(client, body.requirementId));
@@ -162,7 +163,8 @@ export function registerPlannerRoutes(app: FastifyInstance) {
     const client = await pool.connect();
     try {
       const res = await client.query(
-        `SELECT id, action, actor, ts FROM audit ORDER BY ts DESC LIMIT 50`
+        `SELECT id, action, actor, ts FROM audit ORDER BY ts DESC LIMIT $1`,
+           [AUDIT_LOG_LIMIT]
       );
       reply.send({ items: res.rows });
     } finally {
